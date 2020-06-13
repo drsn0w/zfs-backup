@@ -36,11 +36,16 @@ def create(datasetName):
             logging.fatal("zfs create failed!")
             sys.exit(1)
             
-def send(sourceSnapshot, destDataset):
+def sendLocal(sourceSnapshot, destDataset):
     if not checkExistsSnapshot(sourceSnapshot):   
         logging.fatal(sourceSnapshot + " does not exist! Exiting.")
         sys.exit(1)
 
     if not checkExists(destDataset):
         logging.fatal(destDataset + "does not exist! Exiting.")
+        sys.exit(1)
+
+def sendRemote(sourceSnapshot, destHost, destDataset):
+        if not checkExistsSnapshot(sourceSnapshot):   
+        logging.fatal(sourceSnapshot + " does not exist! Exiting.")
         sys.exit(1)
