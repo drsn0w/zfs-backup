@@ -47,5 +47,5 @@ def sendLocal(sourceSnapshot, destDataset):
 
 def sendRemote(sourceSnapshot, destHost, destDataset):
         if not checkExistsSnapshot(sourceSnapshot):   
-        logging.fatal(sourceSnapshot + " does not exist! Exiting.")
-        sys.exit(1)
+            logging.fatal(sourceSnapshot + " does not exist! Exiting.")
+            sys.exit(1)
