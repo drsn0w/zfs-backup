@@ -4,7 +4,7 @@ coloredlogs.install(level='DEBUG')
 import sys
 import configparser
 import datetime
-import zfscore as zfs
+import zfs
 
 # Read configuration files
 cfg = configparser.ConfigParser()
