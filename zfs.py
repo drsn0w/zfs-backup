@@ -15,9 +15,10 @@ def create(datasetName):
         libzfs.lzc_create(datasetNameB)
     except lzce.FilesystemExists:
         logging.fatal(datasetName + " already exists! Exiting.")
-        exit(1)
+        sys.exit(1)
     except (lzce.NameInvalid, lzce.NameTooLong):
         logging.fatal(datasetName + " is an invalid dataset name!")
+        sys.exit(1)
 
 def snapshot(datasetName, snapshotName):
     logging.debug("making snapshot " + snapshotName + " in " + datasetName)
