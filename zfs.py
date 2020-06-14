@@ -2,7 +2,7 @@ import logging,coloredlogs
 import libzfs_core as libzfs
 import libzfs_core.exceptions as lzce
 import subprocess
-import sys, os, threading
+import sys, os, threading, io
 coloredlogs.install(level='DEBUG')
 SEND_RECV_LOCK = threading.Lock()
 
@@ -31,31 +31,17 @@ def snapshot(datasetName, snapshotName):
         logging.fatal("unable to create snapshot: " + bork.message + "! Exiting.")
         sys.exit(1)
 
-def _zfs_send_threaded(snb, fd):
-    try:
-        libzfs.lzc_send(snb, None, fd)
-    except Exception as bork:
-        logging.fatal(bork)
-
-def _zfs_recv_threaded(sdnb, fd):
-    try:
-        libzfs.lzc_receive(sdnb, fd)
-    except Exception as bork:
-        logging.fatal(bork)
-
-
 def sendLocal(datasetName, snapshotName, destDataset):
     logging.debug("sending " + datasetName + "@" + snapshotName + " to " + destDataset)
+    logging.warning("using unsafe method here! please update with libzfs if you know how!")
     snapLongName = datasetName + "@" + snapshotName
-    snapLongNameB = str.encode(snapLongName)
-    snapLongDest = destDataset + "@" + snapshotName
-    snapLongDestB = str.encode(snapLongDest)
-    datasetNameB = str.encode(datasetName)
-    snapshotNameB = str.encode(snapshotName)
-    destDatasetB = str.encode(destDataset)
-
-    zfdw, zfdr = os.pipe()
-    logging.debug("zfdw: " + str(zfdw) + " zfdr: " + str(zfdr))
-    libzfs.lzc_send(snapLongNameB, None, zfdw)
-    libzfs.lzc_receive(snapLongDestB, zfdr)
-    
+    if checkExists(destDataset):
+        logging.fatal(snapLongName + " already exists! Exiting.")
+        sys.exit(1)
+    else:
+        ps = subprocess.Popen(('zfs', 'send', snapLongName), stdout=subprocess.PIPE)
+        recvCode = subprocess.call(('zfs', 'recv', destDataset), stdin=ps.stdout)
+        ps.wait()
+        if recvCode != 0:
+            logging.fatal("an unexpected error occured! Exiting.")
+            sys.exit(1)
