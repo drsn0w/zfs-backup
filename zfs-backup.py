@@ -3,7 +3,8 @@ import coloredlogs,logging
 coloredlogs.install(level='DEBUG')
 import sys
 import configparser
-import zfs
+import datetime
+import zfscore as zfs
 
 # Read configuration files
 cfg = configparser.ConfigParser()
@@ -35,16 +36,37 @@ for x in datasetsToProcess:
 # Process datasets
 for x in datasetsToProcess:
     logging.info("Processsing dataset " + x)
-    dsBackupPool = cfg[x]['backuppool'] + "/" + x
+    dsBackupPool = cfg[x]['backuppool']
+    dsBackupSet = dsBackupPool + "/" + x
     logging.debug("dsBackupPool is " + dsBackupPool)
     dsEncryptBackup = cfg[x]['encrypted']
     dsBackupFreq = cfg[x]['frequency']
     dsFirstRun = False
 
     # Check if backup dataset exists
-    if zfs.checkExists(dsBackupPool):
-        logging.debug(dsBackupPool + " exists!")
+    if zfs.checkExists(dsBackupSet):
+        logging.debug(dsBackupSet + " exists!")
     else:
-        logging.warning(dsBackupPool + " does not exist and will need to be created.")
+        logging.warning(dsBackupSet + " does not exist!")
+        if not zfs.checkExists(dsBackupPool):
+            logging.fatal(dsBackupPool + " does not exist. Please create " + dsBackupPool + " zpool on your chosen backup device.")
+            sys.exit(1)
+
         dsFirstRun = True
-        zfs.create(dsBackupPool)
+
+    if dsFirstRun:
+        logging.warning("This appears to be the first run of zfs-backup for " + x +". Is this correct? [y/N] ")
+        newAnswer = input()
+        if newAnswer == "y" or newAnswer == "Y":
+            logging.debug("proceeding as first run")
+        elif newAnswer == "n" or newAnswer == "N" or newAnswer == "":
+            logging.fatal("Please check your storage devices and run zfs-backup again! Exiting.")
+            sys.exit(1)
+        else:
+            logging.fatal("Unknown input! Exiting.")
+            sys.exit(1)
+        logging.info("creating initial snapshot")
+        snapshotName = "zback-" + datetime.datetime.now().strftime("%b%d%Y-%H%M%S")
+        logging.debug("snapshot name will be: " + x + "@" + snapshotName)
+        logging.info("creating snapshot...")
+        zfs.snapshot(x, snapshotName)
