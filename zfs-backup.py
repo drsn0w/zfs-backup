@@ -65,8 +65,13 @@ for x in datasetsToProcess:
         else:
             logging.fatal("Unknown input! Exiting.")
             sys.exit(1)
-        logging.info("creating initial snapshot")
-        snapshotName = "zback-" + datetime.datetime.now().strftime("%b%d%Y-%H%M%S")
+
+        #snapshotName = "zback-" + datetime.datetime.now().strftime("%b%d%Y-%H%M%S")
+        snapshotName = "borktest"
         logging.debug("snapshot name will be: " + x + "@" + snapshotName)
-        logging.info("creating snapshot...")
+        logging.info("creating initial snapshot...")
         zfs.snapshot(x, snapshotName)
+        logging.info("snapshot created!")
+        logging.info("sending snapshot to " + dsBackupSet)
+        zfs.sendLocal(x, snapshotName, dsBackupSet)
+        logging.info("sent!")
